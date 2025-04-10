@@ -455,9 +455,9 @@ frappe.ui.form.on("Update Document", {
             options = ["Vehicle Number Issue"];
         }
         
-        // else{
-        //     options = ["Vehicle Number Issue"];
-        // }
+        else{
+            options = ["Vehicle Number Issue"];
+        }
         frm.set_df_property('issue', 'options', options);
     }
 });

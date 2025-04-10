@@ -269,13 +269,15 @@ class UpdateDocument(Document):
     def update_record(self, docname):
         doc2 = frappe.get_doc("Gate Entry", self.gate_entry)
         doc2.db_set(self.update_field,self.value_to_update)
-        doc2.db_set("vehicle",self.value_to_update)
+        if(doc2.vehicle_owner =="Company Owned"):
+            doc2.db_set("vehicle",self.value_to_update)
         doc2.save(ignore_permissions=True)  # Save the document
 
         if doc2.is_weighment_required == "Yes":
             doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
             doc3.db_set(self.update_field, self.value_to_update)
-            doc2.db_set("vehicle",self.value_to_update)
+            if(doc2.vehicle_owner =="Company Owned"):
+                doc3.db_set("vehicle",self.value_to_update)
             doc3.save(ignore_permissions=True)
 
         if (
@@ -294,6 +296,27 @@ class UpdateDocument(Document):
             doc4.save(ignore_permissions=True)
             doc5.save(ignore_permissions=True)
 
+        if (
+            doc2.is_weighment_required == "No"  
+            and not doc2.is_manual_weighment 
+            and doc2.entry_type == "Inward"
+        ):
+            try:
+                prg = frappe.get_value("Purchase Receipt Item", {"custom_gate_entry": doc2.name}, 'parent')
+                print("------------------------>prg", prg)
+                doc4 = frappe.get_doc("Purchase Receipt", prg)
+                doc4.db_set("vehicle_no", self.value_to_update)
+                pi = frappe.get_value("Purchase Invoice Item", {"purchase_receipt": doc4.name}, 'parent')
+                doc5 = frappe.get_doc("Purchase Invoice", pi)
+                doc5.db_set("vehicle_no", self.value_to_update)
+                qc = frappe.get_all("Quality Inspection",filters={"reference_name":prg},fields=["name"])
+                print("------------------------>qc", qc)#
+                for q in qc:
+                    a = frappe.get_doc("Quality Inspection",q.name)
+                    a.db_set("custom_vehicle_no",self.value_to_update)
+            except Exception as e:
+                print(f"Error fetching Purchase Receipt from Gate Entry: {e}")
+            
         if (
             doc2.is_weighment_required == "Yes" 
             and doc2.is_completed 
