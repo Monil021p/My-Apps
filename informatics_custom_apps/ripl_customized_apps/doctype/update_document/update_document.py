@@ -56,7 +56,8 @@ class UpdateDocument(Document):
         # doc_d.db_set("vehicle_no",doc3.vehicle_number)
         # doc_d.save(ignore_permissions=True)
         if doc2.entry_type == "Outward" and doc2.is_manual_weighment == 0 and doc3.is_completed==1:
-                doc5 = frappe.get_all("Delivery Note", filters={"custom_weighment": doc3.name}, fields=["name"])
+                doc5 = frappe.get_all("Delivery Note",filters={"custom_weighment": doc3.name,"docstatus": ["!=", 2]},fields=["name"])
+
                 print("----------->Existing D.N", doc5)
                 doc3.delivery_notes = []
                 doc3.delivery_note_details =[]
@@ -219,43 +220,47 @@ class UpdateDocument(Document):
             doc2.db_set("is_completed",0)
             doc3.db_set("is_in_progress",1)
             doc3.db_set("is_completed",0)
-            doc_d=frappe.get_doc("Delivery Note", {"name": self.custom_delivery_note})
-            doc_d.db_set("custom_weighment",doc3.name)#To Link D.N
-            doc_d.db_set("vehicle_no",doc3.vehicle_number)
-            doc_d.save(ignore_permissions=True)
+            doc2.save(ignore_permissions=True)
+            doc3.save(ignore_permissions=True)
+            # doc_d=frappe.get_doc("Delivery Note", {"name": self.custom_delivery_note})
+            # doc_d.db_set("custom_weighment",doc3.name)#To Link D.N
+            # doc_d.db_set("vehicle_no",doc3.vehicle_number)
+            # doc_d.save(ignore_permissions=True)
 
-            if doc2.entry_type == "Outward" and doc2.is_manual_weighment == 0:
-                doc5 = frappe.get_all("Delivery Note", filters={"custom_weighment": doc3.name}, fields=["name"])
-                print("----------->Existing D.N", doc5)
-                doc3.delivery_notes = []
-                doc3.delivery_note_details =[]
+            # if doc2.entry_type == "Outward" and doc2.is_manual_weighment == 0:
+            #   doc5 = frappe.get_all("Delivery Note",filters={"custom_weighment": doc3.name,"docstatus": ["!=", 2]},fields=["name"])
+            #     print("--########################----------------------->Existing D.N", doc5)
+                # doc3.delivery_notes = []
+                # doc3.delivery_note_details =[]
                 
-                print("########################--------------New D.N--->",self.custom_delivery_note)
-                data = frappe.get_all(
-                "Delivery Note Item",
-                {"parent": self.custom_delivery_note},
-                ["parent","item_code","item_name","qty","uom","custom_total_package_weight","total_weight"]
-                )
-                if data:
-                    new_row = doc3.append("delivery_notes", {})
-                    new_row.delivery_note = self.custom_delivery_note 
-                    for item in data:
-                        doc3.append("delivery_note_details",
-                            {
-                                "delivery_note": item.get("parent"),
-                                "item": item.get("item_code"),
-                                "item_name": item.get("item_name"),
-                                "qty": item.get("qty"),
-                                "uom": item.get("uom"),
-                                "total_weight": (item.get("custom_total_package_weight") or 0) + (item.get("total_weight") or 0)
-                            }
-                        )
-                for doc6 in doc5:   
-                    delivery_note = frappe.get_doc("Delivery Note", doc6["name"])
-                    delivery_note.db_set("custom_weighment", "")#To Unlink D.N
-                    delivery_note.db_set("vehicle_no", "")
-                    delivery_note.save(ignore_permissions=True)
-                    doc3.save(ignore_permissions=True)
+                # print("########################--------------New D.N--->",self.custom_delivery_note)
+                # for i in doc5:
+                #     data = frappe.get_all(
+                #     "Delivery Note Item",
+                #     {"parent": i},
+                #     ["parent","item_code","item_name","qty","uom","custom_total_package_weight","total_weight"]
+                #     )
+                #     if data:
+                #         # new_row = doc3.append("delivery_notes", {})
+                #         # new_row.delivery_note = self.custom_delivery_note 
+                #         for item in data:
+                #             doc3.append("delivery_note_details",
+                #                 {
+                #                     "delivery_note": item.get("parent"),
+                #                     "item": item.get("item_code"),
+                #                     "item_name": item.get("item_name"),
+                #                     "qty": item.get("qty"),
+                #                     "uom": item.get("uom"),
+                #                     "total_weight": (item.get("custom_total_package_weight") or 0) + (item.get("total_weight") or 0)
+                #                 }
+                #             )
+                
+                # for doc6 in doc5:   
+                #     delivery_note = frappe.get_doc("Delivery Note", doc6["name"])
+                #     delivery_note.db_set("custom_weighment", "")#To Unlink D.N
+                #     delivery_note.db_set("vehicle_no", "")
+                #     delivery_note.save(ignore_permissions=True)
+                #     doc3.save(ignore_permissions=True)
 
 
             if doc4.is_assigned==0:
@@ -263,7 +268,6 @@ class UpdateDocument(Document):
             else:
                 frappe.msgprint("Card Might Be In Use By Other Vehicle, Kindly Check And Assign New Card And Proceed For Weighment!")#To check if card is assigned to someone else,then assign new card
             return True
-
 
     @frappe.whitelist()
     def update_record(self, docname):
@@ -512,9 +516,17 @@ class UpdateDocument(Document):
     @frappe.whitelist()
     def item_group(self,docname):
         doc2 = frappe.get_doc("Gate Entry", self.gate_entry)
-        doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
-        doc2.db_set("item_group",self.item_group1)
-        doc3.db_set("item_group",self.item_group1)
-        doc2.save(ignore_permissions=True)
-        doc3.save(ignore_permissions=True)
-        return True
+        if(doc2.is_in_progress):
+            try:
+                doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry}) 
+                doc3.db_set("item_group",self.item_group1)
+                doc3.delivery_notes = []
+                doc3.delivery_note_details =[]
+                doc2.db_set("item_group",self.item_group1)
+                doc2.save(ignore_permissions=True)
+                doc3.save(ignore_permissions=True)
+                return True
+            except Exception as e:
+                print(f"Error Changing Item Group:{e}")
+        else:
+            pass

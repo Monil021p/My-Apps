@@ -31,7 +31,7 @@ function wrong_card(frm){
         callback: function (response) {
             if (response.message) {
                 frappe.show_alert({
-                    message: __('Weighment Fields Updated Successfully, Kindly Check Details And Proceed For Weighment!'),
+                    message: __('Fields Updated Successfully, Kindly Update Delivery Note And Proceed For Weighment!'),
                     indicator: 'orange'
                 });
             }
@@ -122,9 +122,9 @@ function manual(frm){
         callback: function (response) {
             if (response.message) {
                 frappe.show_alert({
-                    message: __('Data Updated Successfully, Add Delivery Note To Continue!'),
+                    message: __('Data Updated Successfully, Add/Check Delivery Note To Continue!'),
                     indicator: 'green'
-                });
+                },5);
             }
         }
     });
