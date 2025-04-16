@@ -5,6 +5,35 @@ import frappe
 from frappe.model.document import Document
 
 class UpdateDocument(Document):
+    def validate(self):
+        if self.issue == "Wrong Card Weighment(Not Manual)" and self.custom_is_completed1 == 1:
+            if self.gate_entry:
+                doc2 = frappe.get_doc("Gate Entry", {"name": self.gate_entry})
+                doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
+
+                for i in doc2.purchase_orders:
+                    po = frappe.get_doc("Purchase Order", {"name": i.purchase_orders})
+                    print("---------111111------------------------>>>>>>>>>>po",po)
+                for j in doc2.items:
+                    ge_rec = j.received_quantity
+                    print("---------111111------------------------>>>>>>>>>>ge_rec",ge_rec)
+                for k in po.items:
+                    ic = k.item_code.split(":")[0].strip()
+                    qty = k.qty
+                    print("---------111111------------------------>>>>>>>>>>qty",qty)
+
+                item = frappe.get_doc("Item", {"name": ic})
+                tl = (item.over_delivery_receipt_allowance/100)
+                print("---------111111------------------------>>>>>>>>>>tl",tl)
+                f_value = (qty+(qty * tl) - ge_rec)
+                print("---------111111------------------------>>>>>>>>>>f_value",f_value)
+                if self.bill_quantity == 0:
+                    frappe.throw("Bill Quantity cannot be 0.")
+
+                if self.bill_quantity > f_value:
+                    frappe.throw(f"Bill Quantity cannot be more than the allowed value ({f_value}).")
+
+        
     @frappe.whitelist()
     def fetch_record(self, docname):   
         doc1 = frappe.get_doc("Gate Entry", self.gate_entry)
@@ -191,6 +220,36 @@ class UpdateDocument(Document):
             doc3.db_set("is_in_progress", 1)
             doc3.db_set("is_completed", 0)
 
+            #Fetch PO from child table
+            for i in doc2.purchase_orders:
+                po = frappe.get_doc("Purchase Order",{"name":i.purchase_orders})
+                print("------The--PO--Is ----____--->",po)
+            #To fetch received qty
+            for j in doc2.items:
+                ge_rec=j.received_quantity
+                print("------The--GE--Recceived---qty--Is----____--->",ge_rec)
+            for k in po.items:
+                ic=k.item_code.split(":")[0].strip()
+                qty=k.qty
+                ge_rec_draft = k.gate_entry_received_qty
+                new_ge_draft = ge_rec_draft+(ge_rec-self.bill_quantity)
+                gerp = new_ge_draft/qty*100
+                print("------The--Item--Code--Is----____--->",ic)
+                print("------The--Item--Quantity--Is----____--->",qty)
+                print("------The--Existing--Ge_Rec_Quantity----____--->",ge_rec_draft)
+                print("------The--New--Ge_Rec_Quantity----____--->",new_ge_draft)
+                print("------The--New--Ge_Rec_percentage----____--->",gerp)
+                k.db_set("gate_entry_received_qty",new_ge_draft)
+            po.db_set("gate_entry_received_percentage",gerp)
+            #To fetch Item And It's Tolerance
+            item = frappe.get_doc("Item",{"name":ic})
+            tl=(item.over_delivery_receipt_allowance/100)
+            print("------The--Item---Is----____--->",item)
+            print("------The--Item--tolerance--Is----____--->",tl)
+
+            #Add Formula for bill_quantity validation
+            f_value = (qty+(qty * tl) - ge_rec)
+            print("------The--Formula--Value--Is----____--->",f_value)
             # Fetch document names first
             doc7_name = frappe.get_value("Purchase Details", {"parent": doc2.name}, "name")
             doc8_name = frappe.get_value("Purchase Details", {"parent": doc3.name}, "name")
@@ -200,6 +259,7 @@ class UpdateDocument(Document):
                 doc7 = frappe.get_doc("Purchase Details", doc7_name)
                 doc7.db_set("received_quantity", self.bill_quantity)
                 doc7.db_set("accepted_quantity", self.bill_quantity)
+
 
             if doc8_name:
                 doc8 = frappe.get_doc("Purchase Details", doc8_name)
