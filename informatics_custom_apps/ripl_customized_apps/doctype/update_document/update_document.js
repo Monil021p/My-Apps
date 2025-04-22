@@ -5,7 +5,7 @@ function clear_fields(frm) {
     let fields_to_clear = [
         "vehicle_number", "is_manual_weighment", "date", "transporter", "issue",
         "is_weighment_required", "is_in_progress","custom_w_item_group", "weighment", "custom_is_completed1","custom_is_in_progress1","custom_is_manual_weighment1",
-        "is_completed","custom_vehicle_number1", "supplier_name", "entry_type","custom_tare_weight","custom_gross_weight","custom_net_weight"
+        "is_completed","custom_vehicle_number1","vehicle_owner", "supplier_name", "entry_type","custom_tare_weight","custom_gross_weight","custom_net_weight"
     ];
     
     fields_to_clear.forEach(field => {
@@ -31,7 +31,7 @@ function wrong_card(frm){
         callback: function (response) {
             if (response.message) {
                 frappe.show_alert({
-                    message: __('Fields Updated Successfully, Kindly Update Delivery Note And Proceed For Weighment!'),
+                    message: __('Fields Updated Successfully, Kindly Check Details And Proceed For Weighment!'),
                     indicator: 'orange'
                 });
             }
@@ -405,6 +405,7 @@ frappe.ui.form.on("Update Document", {
                     frm.set_value("is_in_progress", response.message.is_in_progress);
                     frm.set_value("entry_type", response.message.entry_type);
                     frm.set_value("is_manual_weighment", response.message.is_manual_weighment);
+                    frm.set_value("vehicle_owner", response.message.vehicle_owner);
                     frm.set_value("supplier_name", response.message.supplier_name);
                     frm.set_value("is_manual_weighment", response.message.is_manual_weighment);
                     frm.set_value("weighment", response.message.weighment);

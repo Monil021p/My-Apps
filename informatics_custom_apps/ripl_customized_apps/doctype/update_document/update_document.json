@@ -25,6 +25,7 @@
   "is_completed",
   "is_in_progress",
   "is_manual_weighment",
+  "vehicle_owner",
   "weighment_details_section",
   "weighment",
   "custom_tare_weight",
@@ -39,11 +40,12 @@
   "section_break_nixw",
   "issue",
   "update_field",
+  "vehicle",
   "value_to_update",
-  "item_group1",
-  "custom_delivery_note",
   "amended_from",
   "column_break_ajqv",
+  "item_group1",
+  "custom_delivery_note",
   "bill_quantity"
  ],
  "fields": [
@@ -240,11 +242,11 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.issue=='Vehicle Number Issue';",
+   "depends_on": "eval:doc.issue=='Vehicle Number Issue' && doc.vehicle_owner!=\"Company Owned\";",
    "fieldname": "value_to_update",
    "fieldtype": "Data",
    "label": "Value To Update",
-   "mandatory_depends_on": "eval:doc.issue==\"\";"
+   "mandatory_depends_on": "eval:doc.issue=='Vehicle Number Issue' && doc.vehicle_owner!=\"Company Owned\";"
   },
   {
    "depends_on": "eval:doc.issue=='Outward Manual Issue' || doc.issue == \"Wrong Item Group Selected(Outward)\";",
@@ -289,12 +291,26 @@
    "fieldtype": "Data",
    "label": "Item Group",
    "read_only": 1
+  },
+  {
+   "fieldname": "vehicle_owner",
+   "fieldtype": "Data",
+   "label": "Vehicle Owner",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.vehicle_owner!=\"Third Party\" && doc.issue==\"Vehicle Number Issue\";",
+   "fieldname": "vehicle",
+   "fieldtype": "Link",
+   "label": "Vehicle",
+   "mandatory_depends_on": "eval:doc.vehicle_owner!=\"Third Party\" && doc.issue==\"Vehicle Number Issue\";",
+   "options": "Vehicle"
   }
  ],
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-04-15 13:35:59.443645",
+ "modified": "2025-04-22 15:08:22.829114",
  "modified_by": "Administrator",
  "module": "RIPL Customized Apps",
  "name": "Update Document",

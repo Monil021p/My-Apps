@@ -50,7 +50,8 @@ class UpdateDocument(Document):
                 "item_group": doc1.item_group,
                 "is_weighment_required": doc1.is_weighment_required,
                 "is_completed": doc1.is_completed,
-                "is_in_progress": doc1.is_in_progress,   
+                "is_in_progress": doc1.is_in_progress, 
+                "vehicle_owner": doc1.vehicle_owner,  
                 "entry_type": doc1.entry_type,
                 "is_manual_weighment": doc1.is_manual_weighment, 
             }  
@@ -59,6 +60,7 @@ class UpdateDocument(Document):
             return {
                 "vehicle_number": doc1.vehicle_number,
                 "date": doc1.date,
+                "vehicle_owner": doc1.vehicle_owner,
                 "custom_w_item_group":doc2.item_group,
                 "custom_tare_weight": doc2.tare_weight,
                 "custom_gross_weight": doc2.gross_weight,
@@ -232,7 +234,14 @@ class UpdateDocument(Document):
                 ic=k.item_code.split(":")[0].strip()
                 qty=k.qty
                 ge_rec_draft = k.gate_entry_received_qty
-                new_ge_draft = ge_rec_draft+(ge_rec-self.bill_quantity)
+                a=ge_rec-self.bill_quantity
+                print("------Old__-__New---bill-quantity----____--->",a)
+                if a<0:
+                    new_ge_draft = ge_rec_draft + a
+                    print("!!!!!!!!!!!!!!!IF--is--called--!!!!!!!!!!!!")
+                else:
+                    new_ge_draft = ge_rec_draft - a
+                    print("!!!!!!!!!!!!!!!Else--is--called--!!!!!!!!!!!!")
                 gerp = new_ge_draft/qty*100
                 print("------The--Item--Code--Is----____--->",ic)
                 print("------The--Item--Quantity--Is----____--->",qty)
@@ -332,16 +341,20 @@ class UpdateDocument(Document):
     @frappe.whitelist()
     def update_record(self, docname):
         doc2 = frappe.get_doc("Gate Entry", self.gate_entry)
-        doc2.db_set(self.update_field,self.value_to_update)
+        if(doc2.vehicle_owner !="Company Owned"):
+            doc2.db_set(self.update_field,self.value_to_update)
         if(doc2.vehicle_owner =="Company Owned"):
-            doc2.db_set("vehicle",self.value_to_update)
+            doc2.db_set(self.update_field,self.vehicle)
+            doc2.db_set("vehicle",self.vehicle)
         doc2.save(ignore_permissions=True)  # Save the document
 
         if doc2.is_weighment_required == "Yes":
             doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
-            doc3.db_set(self.update_field, self.value_to_update)
+            if(doc2.vehicle_owner !="Company Owned"):
+                doc3.db_set(self.update_field,self.value_to_update)
             if(doc2.vehicle_owner =="Company Owned"):
-                doc3.db_set("vehicle",self.value_to_update)
+                doc3.db_set(self.update_field,self.vehicle)
+                doc3.db_set("vehicle",self.vehicle)
             doc3.save(ignore_permissions=True)
 
         if (
@@ -355,8 +368,12 @@ class UpdateDocument(Document):
             print("---------------->doc4",doc4)
             print("---------------->si",si)
             doc5 = frappe.get_doc("Sales Invoice", si)
-            doc5.db_set("vehicle_no", self.value_to_update)
-            doc4.db_set("vehicle_no", self.value_to_update)
+            if(doc2.vehicle_owner !="Company Owned"):
+                doc5.db_set("vehicle_no", self.value_to_update)
+                doc4.db_set("vehicle_no", self.value_to_update)
+            else:
+                doc5.db_set("vehicle_no", self.vehicle)
+                doc4.db_set("vehicle_no", self.vehicle)
             doc4.save(ignore_permissions=True)
             doc5.save(ignore_permissions=True)
 
@@ -369,15 +386,24 @@ class UpdateDocument(Document):
                 prg = frappe.get_value("Purchase Receipt Item", {"custom_gate_entry": doc2.name}, 'parent')
                 print("------------------------>prg", prg)
                 doc4 = frappe.get_doc("Purchase Receipt", prg)
-                doc4.db_set("vehicle_no", self.value_to_update)
+                # doc4.db_set("vehicle_no", self.value_to_update)
                 pi = frappe.get_value("Purchase Invoice Item", {"purchase_receipt": doc4.name}, 'parent')
                 doc5 = frappe.get_doc("Purchase Invoice", pi)
-                doc5.db_set("vehicle_no", self.value_to_update)
+                # doc5.db_set("vehicle_no", self.value_to_update)
                 qc = frappe.get_all("Quality Inspection",filters={"reference_name":prg},fields=["name"])
-                print("------------------------>qc", qc)#
+                print("------------------------>qc", qc)
+                if(doc2.vehicle_owner !="Company Owned"):
+                    doc4.db_set("vehicle_no", self.value_to_update)
+                    doc5.db_set("vehicle_no", self.value_to_update)
+                else:
+                    doc4.db_set("vehicle_no", self.vehicle)
+                    doc5.db_set("vehicle_no", self.vehicle)
                 for q in qc:
                     a = frappe.get_doc("Quality Inspection",q.name)
-                    a.db_set("custom_vehicle_no",self.value_to_update)
+                    if(doc2.vehicle_owner !="Company Owned"):
+                        a.db_set("custom_vehicle_no",self.value_to_update)
+                    else:
+                        a.db_set("custom_vehicle_no",self.vehicle)
             except Exception as e:
                 print(f"Error fetching Purchase Receipt from Gate Entry: {e}")
             
@@ -406,16 +432,25 @@ class UpdateDocument(Document):
             if prg:
                 try:
                     doc4 = frappe.get_doc("Purchase Receipt", prg)
-                    doc4.db_set("vehicle_no", self.value_to_update)
+                    if(doc2.vehicle_owner !="Company Owned"):
+                        doc4.db_set("vehicle_no", self.value_to_update)
+                    else:
+                        doc4.db_set("vehicle_no", self.vehicle)
                     qc = frappe.get_all("Quality Inspection",filters={"reference_name":prg},fields=["name"])
                     print("------------------------>qc", qc)#
                     for q in qc:
                         a = frappe.get_doc("Quality Inspection",q.name)
-                        a.db_set("custom_vehicle_no",self.value_to_update)
+                        if(doc2.vehicle_owner !="Company Owned"):
+                            a.db_set("custom_vehicle_no",self.value_to_update)
+                        else:
+                            a.db_set("custom_vehicle_no",self.vehicle)
                     try:
                         pi = frappe.get_value("Purchase Invoice Item", {"purchase_receipt": doc4.name}, 'parent')
                         doc5 = frappe.get_doc("Purchase Invoice", pi)
-                        doc5.db_set("vehicle_no", self.value_to_update)
+                        if(doc2.vehicle_owner !="Company Owned"):
+                            doc5.db_set("vehicle_no", self.value_to_update)
+                        else:
+                            doc5.db_set("vehicle_no", self.vehicle)
                     except Exception as e:
                         print(f"Error updating Invoice (pi):{e}")
                 except Exception as e:
@@ -423,16 +458,25 @@ class UpdateDocument(Document):
             elif not prg and pr:
                 try:
                     doc4 = frappe.get_doc("Purchase Receipt", pr)
-                    doc4.db_set("vehicle_no", self.value_to_update)
+                    if(doc2.vehicle_owner !="Company Owned"):
+                        doc4.db_set("vehicle_no", self.value_to_update)
+                    else:
+                        doc4.db_set("vehicle_no", self.vehicle)
                     qc = frappe.get_all("Quality Inspection",filters={"reference_name":pr},fields=["name"])
                     print("------------------------>qc", qc)
                     for q in qc:
                         a = frappe.get_doc("Quality Inspection",q.name)
-                        a.db_set("custom_vehicle_no",self.value_to_update)
+                        if(doc2.vehicle_owner !="Company Owned"):
+                            a.db_set("custom_vehicle_no",self.value_to_update)
+                        else:
+                            a.db_set("custom_vehicle_no",self.vehicle)
                     try:
                         pi = frappe.get_value("items", {"purchase_receipt": doc4.name}, 'parent')
                         doc5 = frappe.get_doc("Purchase Invoice", pi)
-                        doc5.db_set("vehicle_no", self.value_to_update)
+                        if(doc2.vehicle_owner !="Company Owned"):
+                            doc5.db_set("vehicle_no", self.value_to_update)
+                        else:
+                            doc5.db_set("vehicle_no", self.vehicle)
                     except Exception as e:
                         print(f"Error updating invoice(pi):{e}")
                 except Exception as e:
