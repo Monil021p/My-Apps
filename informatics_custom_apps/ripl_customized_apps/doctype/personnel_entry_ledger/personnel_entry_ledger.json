@@ -1,0 +1,146 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "PEL000.#####",
+ "creation": "2025-04-26 10:04:26.611585",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "section_break_w4nr",
+  "nature",
+  "plant",
+  "company",
+  "employee",
+  "item_details",
+  "remarks",
+  "created_by_section",
+  "custom_employee",
+  "employee_name",
+  "column_break_ekwr",
+  "custom_level",
+  "section_break_nhsn",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_break_w4nr",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "nature",
+   "fieldtype": "Select",
+   "label": "Nature",
+   "options": "\nEmployee\nSupplier\nMiscellaneous",
+   "reqd": 1
+  },
+  {
+   "fieldname": "plant",
+   "fieldtype": "Link",
+   "label": "Plant",
+   "options": "Branch",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "plant.company",
+   "fieldname": "company",
+   "fieldtype": "Data",
+   "label": "Company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "employee",
+   "fieldtype": "Dynamic Link",
+   "in_list_view": 1,
+   "label": "Reference ID",
+   "options": "nature",
+   "reqd": 1
+  },
+  {
+   "allow_on_submit": 1,
+   "fieldname": "item_details",
+   "fieldtype": "Table",
+   "label": "Item Details",
+   "options": "Personnel Item Table",
+   "read_only_depends_on": "eval:doc.docstatus==1 || doc.is_completed;",
+   "reqd": 1
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "created_by_section",
+   "fieldtype": "Section Break",
+   "label": "Created By"
+  },
+  {
+   "fieldname": "custom_employee",
+   "fieldtype": "Link",
+   "label": "Employee",
+   "options": "Employee",
+   "read_only": 1
+  },
+  {
+   "fetch_from": "custom_employee.employee_name",
+   "fieldname": "employee_name",
+   "fieldtype": "Data",
+   "label": "Employee Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ekwr",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fetch_from": "custom_employee.custom_level",
+   "fieldname": "custom_level",
+   "fieldtype": "Data",
+   "label": "Level",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_nhsn",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Personnel Entry Ledger",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2025-04-26 10:07:34.454750",
+ "modified_by": "Administrator",
+ "module": "RIPL Customized Apps",
+ "name": "Personnel Entry Ledger",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "select": 1,
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
