@@ -93,11 +93,12 @@ def get_columns():
 		}
 	]
 def get_data(filters=None):
-	if filters.sales_checkbox:
-		output=[]
-		a = frappe.get_doc("Branch",filters.get("plant"))
-		b = frappe.get_all("Sales Invoice",filters={'branch':a.name,'docstatus':1,'posting_date':['BETWEEN',[filters.from_date,filters.to_date]]})
-
+	output=[]
+	a = frappe.get_doc("Branch",filters.get("plant"))
+	g = frappe.get_doc("GL Entry",filters.get("gl_entry"))
+	# b = frappe.get_all("Sales Invoice",filters={'branch':a.name,'docstatus':1,'posting_date':['BETWEEN',[filters.from_date,filters.to_date]]})
+	if g.voucher_type == "Sales Invoice":
+		b = frappe.get_doc("Sales Invoice",{"name":g.voucher_no})
 		for i in b:
 			sales_invoice = frappe.get_doc("Sales Invoice",i.name)
 			for item in sales_invoice.items:
@@ -128,3 +129,5 @@ def get_data(filters=None):
 			print("---------------->",i)
 			output.append(si)
 		return output
+	else:
+		pass

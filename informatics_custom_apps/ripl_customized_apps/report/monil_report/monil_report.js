@@ -22,11 +22,18 @@ frappe.query_reports["Monil Report"] = {
 			fieldtype: "Date",
 			reqd: 1	
 		},
+		// {
+		// 	fieldname:"sales_checkbox",
+		// 	label: "Sales",
+		// 	fieldtype: "Check",
+		// 	reqd: 0	
+		// }
 		{
-			fieldname:"sales_checkbox",
-			label: "Sales",
-			fieldtype: "Check",
-			reqd: 0	
+		fieldname:"gl_entry",
+			label: "GL Entry",
+			fieldtype: "Link",
+			reqd: 1,
+			options: "GL Entry"	
 		}
 	]
 };
