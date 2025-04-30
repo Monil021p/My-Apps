@@ -4,10 +4,10 @@
 import frappe
 from frappe.model.document import Document
 
-class UpdateDocument(Document):
+class WeighmentIssueManagement(Document):
     def validate(self):
         if self.issue == "Wrong Card Weighment(Not Manual)" and self.custom_is_completed1 == 1:
-            if self.gate_entry:
+            if self.gate_entry and self.entry_type=="Inward":
                 doc2 = frappe.get_doc("Gate Entry", {"name": self.gate_entry})
                 doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
 
@@ -214,22 +214,24 @@ class UpdateDocument(Document):
         doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
         doc4 = frappe.get_doc("Card Details", {"name": doc2.card_number})
 
-        if doc2.entry_type == "Inward" and doc3.is_completed == 1:
+        if doc2.entry_type == "Inward" and doc2.is_completed == 1:
             doc3.db_set("tare_weight", 0)
             doc3.db_set("net_weight", 0)
             doc2.db_set("is_in_progress", 1)
             doc2.db_set("is_completed", 0)
             doc3.db_set("is_in_progress", 1)
             doc3.db_set("is_completed", 0)
-
+        
             #Fetch PO from child table
             for i in doc2.purchase_orders:
                 po = frappe.get_doc("Purchase Order",{"name":i.purchase_orders})
                 print("------The--PO--Is ----____--->",po)
             #To fetch received qty
+            
             for j in doc2.items:
                 ge_rec=j.received_quantity
                 print("------The--GE--Recceived---qty--Is----____--->",ge_rec)
+            
             for k in po.items:
                 ic=k.item_code.split(":")[0].strip()
                 qty=k.qty
@@ -337,6 +339,8 @@ class UpdateDocument(Document):
             else:
                 frappe.msgprint("Card Might Be In Use By Other Vehicle, Kindly Check And Assign New Card And Proceed For Weighment!")#To check if card is assigned to someone else,then assign new card
             return True
+        else:
+            frappe.msgprint("Item Group is Different!")
 
     @frappe.whitelist()
     def update_record(self, docname):

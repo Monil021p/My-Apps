@@ -164,17 +164,17 @@ function debug(frm){
         }
     });
 }
-frappe.ui.form.on("Update Document", {
+frappe.ui.form.on("Weighment Issue Management", {
     onload(frm){
         if (frm.is_new()) {
         load(frm);
        }
     },
-    validate(frm){
-        if(frm.doc.issue=="Wrong Card Weighment(Not Manual)" && frm.doc.custom_is_completed1==1){
+    // validate(frm){
+    //     if(frm.doc.issue=="Wrong Card Weighment(Not Manual)" && frm.doc.custom_is_completed1==1){
 
-        }
-    },
+    //     }
+    // },
     refresh: function(frm) {
         frm.trigger("workflow_state");
     },
