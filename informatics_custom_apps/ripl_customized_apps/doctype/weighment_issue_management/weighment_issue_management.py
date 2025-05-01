@@ -513,6 +513,8 @@ class WeighmentIssueManagement(Document):
             doc4 = frappe.get_doc("Card Details", {"name": doc2.card_number})
             doc4.db_set("is_assigned", True)
             doc2.db_set("is_manual_weighment",False)
+            # doc3.db_set("gross_weight",0)
+            # doc3.db_set("net_weight",0)
             doc2.db_set("item_group",self.item_group1)
             doc3.db_set("item_group",self.item_group1)
             doc3.db_set("is_manual_weighment",False)
@@ -537,6 +539,9 @@ class WeighmentIssueManagement(Document):
             # print("----------->Existing D.N", doc5)
             # doc3.delivery_notes = []
             # doc3.delivery_note_details =[]
+
+            
+            # if self.custom_delivery_note:
             doc_d=frappe.get_doc("Delivery Note", {"name": self.custom_delivery_note})
             doc_d.db_set("custom_weighment",doc3.name)#To Link D.N
             doc_d.db_set("vehicle_no",doc3.vehicle_number)
@@ -561,6 +566,10 @@ class WeighmentIssueManagement(Document):
                             "total_weight": (item.get("custom_total_package_weight") or 0) + (item.get("total_weight") or 0)
                         }
                     )
+            # else:
+            #     pass
+
+
             # for doc6 in doc5:   
             #     delivery_note = frappe.get_doc("Delivery Note", doc6["name"])
             #     delivery_note.db_set("custom_weighment", "")#To Unlink D.N
@@ -615,11 +624,11 @@ class WeighmentIssueManagement(Document):
             doc2.db_set("is_completed", False)
             doc2.db_set("is_in_progress", True)
             if doc2.entry_type == "Inward":
-                doc3.db_set("tare_weight","0")
-                doc3.db_set("net_weight","0")
+                doc3.db_set("tare_weight",0)
+                doc3.db_set("net_weight",0)
             else:
-                doc3.db_set("gross_weight","0")
-                doc3.db_set("net_weight","0")  
+                doc3.db_set("gross_weight",0)
+                doc3.db_set("net_weight",0)  
             return True
     @frappe.whitelist()
     def item_group(self,docname):
