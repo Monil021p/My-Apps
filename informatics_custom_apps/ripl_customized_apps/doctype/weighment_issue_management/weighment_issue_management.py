@@ -41,6 +41,7 @@ class WeighmentIssueManagement(Document):
         doc2 = None  
         if doc1.is_weighment_required == "Yes":
             doc2 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
+            doc3 = frappe.get_doc("Card Details", {"name": doc1.card_number})
 
         if doc1.is_weighment_required == "No":
             return {
@@ -60,6 +61,7 @@ class WeighmentIssueManagement(Document):
             return {
                 "vehicle_number": doc1.vehicle_number,
                 "date": doc1.date,
+                "is_assigned":doc3.is_assigned,
                 "vehicle_owner": doc1.vehicle_owner,
                 "custom_w_item_group":doc2.item_group,
                 "custom_tare_weight": doc2.tare_weight,
@@ -276,10 +278,11 @@ class WeighmentIssueManagement(Document):
                 doc8 = frappe.get_doc("Purchase Details", doc8_name)
                 doc8.db_set("received_quantity", self.bill_quantity)
                 doc8.db_set("accepted_quantity", self.bill_quantity)
-
-            if doc4.is_assigned == 0:
-                doc4.db_set("is_assigned", 1)
-            else:
+            if self.new_card:
+                doc2.db_set("card_number",self.new_card)
+            if not self.new_card and doc4.is_assigned==0:
+                 doc4.db_set("is_assigned", True)
+            elif doc4.is_assigned==1 and self.is_completed==1:
                 frappe.msgprint("Card Might Be In Use By Other Vehicle, Kindly Check And Assign New Card And Proceed For Weighment!")
                 # To check if card is assigned to someone else, then assign a new card
             return True
@@ -333,9 +336,10 @@ class WeighmentIssueManagement(Document):
                 #     delivery_note.save(ignore_permissions=True)
                 #     doc3.save(ignore_permissions=True)
 
-
-            if doc4.is_assigned==0:
-                doc4.db_set("is_assigned",1)
+            if self.new_card:
+                doc2.db_set("card_number",self.new_card)
+            if not self.new_card and doc4.is_assigned==0:
+                 doc4.db_set("is_assigned", True)
             else:
                 frappe.msgprint("Card Might Be In Use By Other Vehicle, Kindly Check And Assign New Card And Proceed For Weighment!")#To check if card is assigned to someone else,then assign new card
             return True
@@ -511,19 +515,21 @@ class WeighmentIssueManagement(Document):
         if doc2.is_weighment_required == "Yes" and doc2.entry_type == "Outward" and doc2.is_manual_weighment ==1 and doc2.is_in_progress ==1:
             doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
             doc4 = frappe.get_doc("Card Details", {"name": doc2.card_number})
-            doc4.db_set("is_assigned", True)
             doc2.db_set("is_manual_weighment",False)
             # doc3.db_set("gross_weight",0)
             # doc3.db_set("net_weight",0)
             doc2.db_set("item_group",self.item_group1)
             doc3.db_set("item_group",self.item_group1)
             doc3.db_set("is_manual_weighment",False)
+            if self.new_card:
+                doc2.db_set("card_number",self.new_card)
+            if not self.new_card and doc4.is_assigned==0:
+                 doc4.db_set("is_assigned", True)
             return True
         if doc2.is_weighment_required == "Yes" and doc2.entry_type == "Outward" and doc2.is_manual_weighment ==1 and doc2.is_completed==1:
             doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
             doc4 = frappe.get_doc("Card Details", {"name": doc2.card_number})
 
-            doc4.db_set("is_assigned", True)
             doc2.db_set("is_manual_weighment",False)
             doc3.db_set("is_manual_weighment",False)
             doc2.db_set("item_group",self.item_group1)
@@ -576,6 +582,10 @@ class WeighmentIssueManagement(Document):
             #     delivery_note.db_set("vehicle_no", "")
             #     delivery_note.save(ignore_permissions=True)
             #     doc3.save(ignore_permissions=True)
+            if self.new_card:
+                doc2.db_set("card_number",self.new_card)
+            if not self.new_card and doc4.is_assigned==0:
+                 doc4.db_set("is_assigned", True)
             doc3.save(ignore_permissions=True)
         return True   
         # try:
@@ -611,14 +621,13 @@ class WeighmentIssueManagement(Document):
         # except Exception as e:
         #         print(f"Error: {e}")
         
-        return True
+        # return True
     @frappe.whitelist()
     def second_weight(self, docname):
         doc2 = frappe.get_doc("Gate Entry", self.gate_entry)
         if doc2.is_weighment_required == "Yes" and doc2.entry_type in ["Outward", "Inward"] and doc2.is_completed and doc2.is_manual_weighment==1:
             doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
             doc4 = frappe.get_doc("Card Details", {"name": doc2.card_number})
-            doc4.db_set("is_assigned", True)
             doc3.db_set("is_completed", False)
             doc3.db_set("is_in_progress", True)
             doc2.db_set("is_completed", False)
@@ -629,6 +638,10 @@ class WeighmentIssueManagement(Document):
             else:
                 doc3.db_set("gross_weight",0)
                 doc3.db_set("net_weight",0)  
+            if self.new_card:
+                doc2.db_set("card_number",self.new_card)
+            if not self.new_card and doc4.is_assigned==0:
+                 doc4.db_set("is_assigned", True)
             return True
     @frappe.whitelist()
     def item_group(self,docname):

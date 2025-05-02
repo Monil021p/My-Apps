@@ -3,7 +3,7 @@
 
 function clear_fields(frm) {
     let fields_to_clear = [
-        "vehicle_number", "is_manual_weighment", "date", "transporter", "issue",
+        "vehicle_number", "is_manual_weighment", "date", "transporter", "issue", "is_assigned",
         "is_weighment_required", "is_in_progress","custom_w_item_group", "weighment", "custom_is_completed1","custom_is_in_progress1","custom_is_manual_weighment1",
         "is_completed","custom_vehicle_number1","vehicle_owner", "supplier_name", "entry_type","custom_tare_weight","custom_gross_weight","custom_net_weight"
     ];
@@ -15,7 +15,7 @@ function clear_fields(frm) {
 function load(frm) {
     let fields_to_clear = [
         "is_manual_weighment","is_completed","custom_is_completed1","custom_is_in_progress1","custom_is_manual_weighment1",
-        "is_weighment_required", "is_in_progress"];
+        "is_weighment_required", "is_in_progress","is_assigned"];
     
     fields_to_clear.forEach(field => {
         frm.set_value(field, null);
@@ -72,7 +72,7 @@ function change_dn(frm){
                 frappe.show_alert({
                     message: __('Kindly Check Old Delivery Note/Sales Invoice Status And Perform Required Actions If Any!'),
                     indicator: 'orange'
-                },8);
+                },10);
             }
         }
     });
@@ -319,7 +319,7 @@ frappe.ui.form.on("Weighment Issue Management", {
             frm.set_query("custom_delivery_note", function(doc) {
                 return {
                     filters: {
-                        company: doc.company,
+                        // company: doc.company,
                         status: "Draft",
                         item_group: doc.custom_w_item_group,
                         custom_weighment: ""
@@ -330,7 +330,7 @@ frappe.ui.form.on("Weighment Issue Management", {
                 frm.set_query("custom_delivery_note", function(doc) {
                     return {
                         filters: {
-                            company: doc.company,
+                            // company: doc.company,
                             status: "Draft",
                             item_group: doc.item_group1,
                             custom_weighment: ""
@@ -348,11 +348,20 @@ frappe.ui.form.on("Weighment Issue Management", {
             });
         }
     },
+    is_assigned(frm){
+        frm.set_query("new_card", function(doc) {
+            return {
+                filters: {
+                    is_assigned:0,
+                }
+            };
+        });
+    },
     custom_items_group_(frm){
         frm.set_query("custom_delivery_note", function(doc) {
             return {
                 filters: {
-                    company: doc.company,
+                    // company: doc.company,
                     status: "Draft",
                     item_group: doc.custom_items_group_,
                     custom_weighment: ""
@@ -409,6 +418,7 @@ frappe.ui.form.on("Weighment Issue Management", {
                     frm.set_value("supplier_name", response.message.supplier_name);
                     frm.set_value("is_manual_weighment", response.message.is_manual_weighment);
                     frm.set_value("weighment", response.message.weighment);
+                    frm.set_value("is_assigned", response.message.is_assigned);
                     frm.set_value("custom_w_item_group", response.message.custom_w_item_group);
                     frm.set_value("custom_tare_weight", response.message.custom_tare_weight);
                     frm.set_value("custom_gross_weight", response.message.custom_gross_weight);

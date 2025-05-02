@@ -7,8 +7,6 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
-  "gate_entry_date",
-  "company",
   "gate_entry",
   "status",
   "column_break_qpom",
@@ -23,6 +21,7 @@
   "item_group_g",
   "is_weighment_required",
   "is_completed",
+  "is_assigned",
   "is_in_progress",
   "is_manual_weighment",
   "vehicle_owner",
@@ -46,26 +45,14 @@
   "column_break_ajqv",
   "item_group1",
   "custom_delivery_note",
-  "bill_quantity"
+  "bill_quantity",
+  "new_card"
  ],
  "fields": [
   {
-   "fieldname": "gate_entry_date",
-   "fieldtype": "Date",
-   "label": "Gate Entry Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "company",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Company",
-   "options": "Company",
-   "reqd": 1
-  },
-  {
    "fieldname": "gate_entry",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Gate Entry",
    "options": "Gate Entry",
    "reqd": 1
@@ -83,7 +70,8 @@
   },
   {
    "fieldname": "reason",
-   "fieldtype": "Small Text",
+   "fieldtype": "Data",
+   "in_list_view": 1,
    "label": "Reason",
    "reqd": 1
   },
@@ -106,7 +94,7 @@
   },
   {
    "fieldname": "date",
-   "fieldtype": "Data",
+   "fieldtype": "Date",
    "label": "Date",
    "read_only": 1
   },
@@ -167,19 +155,19 @@
   },
   {
    "fieldname": "custom_tare_weight",
-   "fieldtype": "Data",
+   "fieldtype": "Float",
    "label": "Tare Weight",
    "read_only": 1
   },
   {
    "fieldname": "custom_gross_weight",
-   "fieldtype": "Data",
+   "fieldtype": "Float",
    "label": "Gross Weight",
    "read_only": 1
   },
   {
    "fieldname": "custom_net_weight",
-   "fieldtype": "Data",
+   "fieldtype": "Float",
    "label": "Net Weight",
    "read_only": 1
   },
@@ -229,6 +217,7 @@
    "depends_on": "eval:doc.gate_entry;",
    "fieldname": "issue",
    "fieldtype": "Select",
+   "in_list_view": 1,
    "label": "Issue",
    "options": "\nVehicle Number Issue\nReset Second Weight(Manual)\nOutward Manual Issue\nWrong Card Weighment(Not Manual)\nUnlink Old & Link New Delivery Note(Weighment Completed)\nWrong Item Group Selected(Outward)",
    "reqd": 1
@@ -305,13 +294,28 @@
    "label": "Vehicle",
    "mandatory_depends_on": "eval:doc.vehicle_owner!=\"Third Party\" && doc.issue==\"Vehicle Number Issue\";",
    "options": "Vehicle"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_assigned",
+   "fieldtype": "Check",
+   "label": "Is Assigned",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.issue && doc.issue!=\"Vehicle Number Issue\" && doc.issue!=\"Unlink Old & Link New Delivery Note(Weighment Completed)\" && doc.is_assigned && !doc.is_in_progress;",
+   "fieldname": "new_card",
+   "fieldtype": "Link",
+   "label": "New Card",
+   "mandatory_depends_on": "eval:doc.issue && doc.issue!=\"Vehicle Number Issue\" && doc.issue!=\"Unlink Old & Link New Delivery Note(Weighment Completed)\" && doc.is_assigned && !doc.is_in_progress;",
+   "options": "Card Details"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-01 15:50:55.649590",
+ "modified": "2025-05-02 12:08:07.379775",
  "modified_by": "Administrator",
  "module": "RIPL Customized Apps",
  "name": "Weighment Issue Management",
