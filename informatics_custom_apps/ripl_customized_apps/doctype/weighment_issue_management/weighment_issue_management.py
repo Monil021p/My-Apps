@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.model.document import Document
+from frappe.model.workflow import apply_workflow
 
 class WeighmentIssueManagement(Document):
     def validate(self):
@@ -127,84 +128,7 @@ class WeighmentIssueManagement(Document):
                     doc3.save(ignore_permissions=True)
         
         return True
-    # @frappe.whitelist()
-    # def change_dn(self, docname):
-    # doc2 = frappe.get_doc("Gate Entry", self.gate_entry)
-    # doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
-
-    # if doc2.entry_type == "Outward" and doc2.is_manual_weighment == 0 and doc3.is_completed == 1:
-    #     doc5 = frappe.get_all("Delivery Note", filters={"custom_weighment": doc3.name}, fields=["name"])
-    #     print("----------->Existing D.N", doc5)
-
-    #     doc3.delivery_notes = []
-    #     doc3.delivery_note_details = []
-
-    #     for doc6 in doc5:
-    #         delivery_note = frappe.get_doc("Delivery Note", doc6["name"])
-
-    #         # Step 1: Unlink fields without updating modified timestamp
-    #         delivery_note.db_set("custom_weighment", "", update_modified=False)
-    #         delivery_note.db_set("vehicle_no", "", update_modified=False)
-
-    #         # Step 2: Save after unlinking
-    #         delivery_note.save(ignore_permissions=True)
-
-    #         # Step 3: Cancel linked Sales Invoices (if any)
-    #         sales_invoices = frappe.get_all(
-    #             "Sales Invoice",
-    #             filters={"delivery_note": delivery_note.name, "docstatus": 1},
-    #             fields=["name"]
-    #         )
-
-    #         for si in sales_invoices:
-    #             sales_invoice = frappe.get_doc("Sales Invoice", si["name"])
-    #             sales_invoice.cancel()
-    #             frappe.msgprint(f"Sales Invoice {sales_invoice.name} cancelled.")
-
-    #         # Step 4: Cancel the Delivery Note (if not already cancelled)
-    #         if delivery_note.docstatus != 2:
-    #             delivery_note.cancel()
-    #             if delivery_note.docstatus == 2:
-    #                 frappe.msgprint(f"Delivery Note {delivery_note.name} cancelled successfully.")
-    #             else:
-    #                 frappe.throw(f"Failed to cancel Delivery Note {delivery_note.name}.")
-
-    #     # Step 5: Link the new Delivery Note
-    #     doc_d = frappe.get_doc("Delivery Note", {"name": self.custom_delivery_note})
-    #     doc_d.db_set("custom_weighment", doc3.name, update_modified=False)
-    #     doc_d.db_set("vehicle_no", doc3.vehicle_number, update_modified=False)
-    #     doc_d.save(ignore_permissions=True)
-
-    #     print("########################--------------New D.N--->", self.custom_delivery_note)
-
-    #     # Step 6: Fetch new delivery note items
-    #     data = frappe.get_all(
-    #         "Delivery Note Item",
-    #         {"parent": self.custom_delivery_note},
-    #         ["parent", "item_code", "item_name", "qty", "uom", "custom_total_package_weight", "total_weight"]
-    #     )
-
-    #     if data:
-    #         new_row = doc3.append("delivery_notes", {})
-    #         new_row.delivery_note = self.custom_delivery_note
-
-    #         for item in data:
-    #             doc3.append("delivery_note_details", {
-    #                 "delivery_note": item.get("parent"),
-    #                 "item": item.get("item_code"),
-    #                 "item_name": item.get("item_name"),
-    #                 "qty": item.get("qty"),
-    #                 "uom": item.get("uom"),
-    #                 "total_weight": (item.get("custom_total_package_weight") or 0) + (item.get("total_weight") or 0)
-    #             })
-
-    #     # Final Save (ignoring version conflict)
-    #     doc3.flags.ignore_version = True
-    #     doc3.save(ignore_permissions=True)
-
-    # return True
-
-
+    
     @frappe.whitelist()
     def debug(self, docname):
         print("!!!!!!!!!!!!!!!!!!!!!!!!11", self.workflow_state)
@@ -212,139 +136,144 @@ class WeighmentIssueManagement(Document):
         return True
     @frappe.whitelist()
     def wrong_card(self, docname):
-        doc2 = frappe.get_doc("Gate Entry", self.gate_entry)
-        doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
-        doc4 = frappe.get_doc("Card Details", {"name": doc2.card_number})
+        try:
+            doc2 = frappe.get_doc("Gate Entry", self.gate_entry)
+            doc3 = frappe.get_doc("Weighment", {"gate_entry_number": self.gate_entry})
+            doc4 = frappe.get_doc("Card Details", {"name": doc2.card_number})
 
-        if doc2.entry_type == "Inward" and doc2.is_completed == 1:
-            doc3.db_set("tare_weight", 0)
-            doc3.db_set("net_weight", 0)
-            doc2.db_set("is_in_progress", 1)
-            doc2.db_set("is_completed", 0)
-            doc3.db_set("is_in_progress", 1)
-            doc3.db_set("is_completed", 0)
-        
-            #Fetch PO from child table
-            for i in doc2.purchase_orders:
-                po = frappe.get_doc("Purchase Order",{"name":i.purchase_orders})
-                print("------The--PO--Is ----____--->",po)
-            #To fetch received qty
-            
-            for j in doc2.items:
-                ge_rec=j.received_quantity
-                print("------The--GE--Recceived---qty--Is----____--->",ge_rec)
-            
-            for k in po.items:
-                ic=k.item_code.split(":")[0].strip()
-                qty=k.qty
-                ge_rec_draft = k.gate_entry_received_qty
-                a=ge_rec-self.bill_quantity
-                print("------Old__-__New---bill-quantity----____--->",a)
-                if a<0:
-                    new_ge_draft = ge_rec_draft + a
-                    print("!!!!!!!!!!!!!!!IF--is--called--!!!!!!!!!!!!")
+            if doc2.entry_type == "Inward" and doc2.is_completed == 1:
+                doc3.db_set("tare_weight", 0)
+                doc3.db_set("net_weight", 0)
+                doc2.db_set("is_in_progress", 1)
+                doc2.db_set("is_completed", 0)
+                doc3.db_set("is_in_progress", 1)
+                doc3.db_set("is_completed", 0)
+
+                try:
+                    prg = frappe.get_value("Purchase Receipt Item", {"custom_gate_entry": doc2.name}, 'parent')
+                    print("------------------------>prg", prg)
+                    doc_pr = frappe.get_doc("Purchase Receipt", prg)
+                
+                    pi = frappe.get_value("Purchase Invoice Item", {"purchase_receipt": doc4.name}, 'parent')
+                    doc_pi = frappe.get_doc("Purchase Invoice", pi)
+                                    
+                except Exception as e:
+                    print(f"Error fetching Purchase Receipt from Gate Entry: {e}")
+                if doc_pr or doc_pi:
+                    # wim= frappe.get_doc("Weighment Issue Management",{"name":self.name})
+                    # wim.db_set("workflow_state","Cancelled")
+                    # print("----------------->wim",wim)
+                    frappe.throw("Kindly remove existing Purchase Receipt/Purchase Invoice before requesting to update!")
+                    
+                #Fetch PO from child table
+                for i in doc2.purchase_orders:
+                    po = frappe.get_doc("Purchase Order",{"name":i.purchase_orders})
+                    print("------The--PO--Is ----____--->",po)
+                #To fetch received qty
+                
+                for j in doc2.items:
+                    ge_rec=j.received_quantity
+                    print("------The--GE--Recceived---qty--Is----____--->",ge_rec)
+                
+                for k in po.items:
+                    ic=k.item_code.split(":")[0].strip()
+                    qty=k.qty
+                    ge_rec_draft = k.gate_entry_received_qty
+                    a=ge_rec-self.bill_quantity
+                    print("------Old__-__New---bill-quantity----____--->",a)
+                    if a<0:
+                        new_ge_draft = ge_rec_draft + a
+                        print("!!!!!!!!!!!!!!!IF--is--called--!!!!!!!!!!!!")
+                    else:
+                        new_ge_draft = ge_rec_draft - a
+                        print("!!!!!!!!!!!!!!!Else--is--called--!!!!!!!!!!!!")
+                    gerp = new_ge_draft/qty*100
+                    print("------The--Item--Code--Is----____--->",ic)
+                    print("------The--Item--Quantity--Is----____--->",qty)
+                    print("------The--Existing--Ge_Rec_Quantity----____--->",ge_rec_draft)
+                    print("------The--New--Ge_Rec_Quantity----____--->",new_ge_draft)
+                    print("------The--New--Ge_Rec_percentage----____--->",gerp)
+                    k.db_set("gate_entry_received_qty",new_ge_draft)
+                po.db_set("gate_entry_received_percentage",gerp)
+                #To fetch Item And It's Tolerance
+                item = frappe.get_doc("Item",{"name":ic})
+                tl=(item.over_delivery_receipt_allowance/100)
+                print("------The--Item---Is----____--->",item)
+                print("------The--Item--tolerance--Is----____--->",tl)
+
+                #Add Formula for bill_quantity validation
+                f_value = (qty+(qty * tl) - ge_rec)
+                print("------The--Formula--Value--Is----____--->",f_value)
+                # Fetch document names first
+                doc7_name = frappe.get_value("Purchase Details", {"parent": doc2.name}, "name")
+                doc8_name = frappe.get_value("Purchase Details", {"parent": doc3.name}, "name")
+
+                # Fetch full document objects and update fields if they exist
+                if doc7_name:
+                    doc7 = frappe.get_doc("Purchase Details", doc7_name)
+                    doc7.db_set("received_quantity", self.bill_quantity)
+                    doc7.db_set("accepted_quantity", self.bill_quantity)
+
+
+                if doc8_name:
+                    doc8 = frappe.get_doc("Purchase Details", doc8_name)
+                    doc8.db_set("received_quantity", self.bill_quantity)
+                    doc8.db_set("accepted_quantity", self.bill_quantity)
+                if self.new_card:
+                    doc2.db_set("card_number",self.new_card)
+                if not self.new_card and doc4.is_assigned==0:
+                    doc4.db_set("is_assigned", True)
+                elif doc4.is_assigned==1 and self.is_completed==1:
+                    frappe.msgprint("Card Might Be In Use By Other Vehicle, Kindly Check And Assign New Card And Proceed For Weighment!")
+                    # To check if card is assigned to someone else, then assign a new card
+                return True
+
+            if doc2.entry_type == "Outward" and doc3.is_completed ==1: #need to build different logic for sugar,others are fine
+                doc3.db_set("gross_weight",0)
+                doc3.db_set("net_weight",0)
+                doc2.db_set("is_in_progress",1)
+                doc2.db_set("is_completed",0)
+                doc3.db_set("is_in_progress",1)
+                doc3.db_set("is_completed",0)
+                doc2.save(ignore_permissions=True)
+                doc3.save(ignore_permissions=True)
+                
+
+                if self.new_card:
+                    doc2.db_set("card_number",self.new_card)
+                if not self.new_card and doc4.is_assigned==0:
+                    doc4.db_set("is_assigned", True)
                 else:
-                    new_ge_draft = ge_rec_draft - a
-                    print("!!!!!!!!!!!!!!!Else--is--called--!!!!!!!!!!!!")
-                gerp = new_ge_draft/qty*100
-                print("------The--Item--Code--Is----____--->",ic)
-                print("------The--Item--Quantity--Is----____--->",qty)
-                print("------The--Existing--Ge_Rec_Quantity----____--->",ge_rec_draft)
-                print("------The--New--Ge_Rec_Quantity----____--->",new_ge_draft)
-                print("------The--New--Ge_Rec_percentage----____--->",gerp)
-                k.db_set("gate_entry_received_qty",new_ge_draft)
-            po.db_set("gate_entry_received_percentage",gerp)
-            #To fetch Item And It's Tolerance
-            item = frappe.get_doc("Item",{"name":ic})
-            tl=(item.over_delivery_receipt_allowance/100)
-            print("------The--Item---Is----____--->",item)
-            print("------The--Item--tolerance--Is----____--->",tl)
-
-            #Add Formula for bill_quantity validation
-            f_value = (qty+(qty * tl) - ge_rec)
-            print("------The--Formula--Value--Is----____--->",f_value)
-            # Fetch document names first
-            doc7_name = frappe.get_value("Purchase Details", {"parent": doc2.name}, "name")
-            doc8_name = frappe.get_value("Purchase Details", {"parent": doc3.name}, "name")
-
-            # Fetch full document objects and update fields if they exist
-            if doc7_name:
-                doc7 = frappe.get_doc("Purchase Details", doc7_name)
-                doc7.db_set("received_quantity", self.bill_quantity)
-                doc7.db_set("accepted_quantity", self.bill_quantity)
-
-
-            if doc8_name:
-                doc8 = frappe.get_doc("Purchase Details", doc8_name)
-                doc8.db_set("received_quantity", self.bill_quantity)
-                doc8.db_set("accepted_quantity", self.bill_quantity)
-            if self.new_card:
-                doc2.db_set("card_number",self.new_card)
-            if not self.new_card and doc4.is_assigned==0:
-                 doc4.db_set("is_assigned", True)
-            elif doc4.is_assigned==1 and self.is_completed==1:
-                frappe.msgprint("Card Might Be In Use By Other Vehicle, Kindly Check And Assign New Card And Proceed For Weighment!")
-                # To check if card is assigned to someone else, then assign a new card
-            return True
-
-        if doc2.entry_type == "Outward" and doc3.is_completed ==1: #need to build different logic for sugar,others are fine
-            doc3.db_set("gross_weight",0)
-            doc3.db_set("net_weight",0)
-            doc2.db_set("is_in_progress",1)
-            doc2.db_set("is_completed",0)
-            doc3.db_set("is_in_progress",1)
-            doc3.db_set("is_completed",0)
-            doc2.save(ignore_permissions=True)
-            doc3.save(ignore_permissions=True)
-            # doc_d=frappe.get_doc("Delivery Note", {"name": self.custom_delivery_note})
-            # doc_d.db_set("custom_weighment",doc3.name)#To Link D.N
-            # doc_d.db_set("vehicle_no",doc3.vehicle_number)
-            # doc_d.save(ignore_permissions=True)
-
-            # if doc2.entry_type == "Outward" and doc2.is_manual_weighment == 0:
-            #   doc5 = frappe.get_all("Delivery Note",filters={"custom_weighment": doc3.name,"docstatus": ["!=", 2]},fields=["name"])
-            #     print("--########################----------------------->Existing D.N", doc5)
-                # doc3.delivery_notes = []
-                # doc3.delivery_note_details =[]
-                
-                # print("########################--------------New D.N--->",self.custom_delivery_note)
-                # for i in doc5:
-                #     data = frappe.get_all(
-                #     "Delivery Note Item",
-                #     {"parent": i},
-                #     ["parent","item_code","item_name","qty","uom","custom_total_package_weight","total_weight"]
-                #     )
-                #     if data:
-                #         # new_row = doc3.append("delivery_notes", {})
-                #         # new_row.delivery_note = self.custom_delivery_note 
-                #         for item in data:
-                #             doc3.append("delivery_note_details",
-                #                 {
-                #                     "delivery_note": item.get("parent"),
-                #                     "item": item.get("item_code"),
-                #                     "item_name": item.get("item_name"),
-                #                     "qty": item.get("qty"),
-                #                     "uom": item.get("uom"),
-                #                     "total_weight": (item.get("custom_total_package_weight") or 0) + (item.get("total_weight") or 0)
-                #                 }
-                #             )
-                
-                # for doc6 in doc5:   
-                #     delivery_note = frappe.get_doc("Delivery Note", doc6["name"])
-                #     delivery_note.db_set("custom_weighment", "")#To Unlink D.N
-                #     delivery_note.db_set("vehicle_no", "")
-                #     delivery_note.save(ignore_permissions=True)
-                #     doc3.save(ignore_permissions=True)
-
-            if self.new_card:
-                doc2.db_set("card_number",self.new_card)
-            if not self.new_card and doc4.is_assigned==0:
-                 doc4.db_set("is_assigned", True)
+                    frappe.msgprint("Card Might Be In Use By Other Vehicle, Kindly Check And Assign New Card And Proceed For Weighment!")#To check if card is assigned to someone else,then assign new card
+                return True
             else:
-                frappe.msgprint("Card Might Be In Use By Other Vehicle, Kindly Check And Assign New Card And Proceed For Weighment!")#To check if card is assigned to someone else,then assign new card
-            return True
-        else:
-            frappe.msgprint("Item Group is Different!")
+                frappe.msgprint("Item Group is Different!")
+        except Exception as e:
+            print("---------------------->Entered Except Block-----------")
+
+            error_text = frappe.get_traceback()
+            frappe.log_error(error_text, "Error in wrong_card")
+
+            try:
+                print("---------------------->Entered Inner Try Block-----------")
+                wim_doc = frappe.get_doc("Weighment Issue Management", self.name)
+
+                # Save to field and add comment
+                wim_doc.db_set("error_message", error_text)
+                wim_doc.add_comment("Comment", f"Automatic Error Logged:\n\n{error_text}")
+                wim_doc.save(ignore_permissions=True)
+                wim_doc.reload()
+                print("--------------------Successfully added error to field and comment----------------------")
+            except Exception as wf_error:
+                # Print + log full traceback from this specific block
+                frappe.log_error(frappe.get_traceback(), "Failed to log error on Weighment Issue Management document")
+                print("!!!!!!!!!!!!!Inner try block failed:!!!!!!!!!!!!!!!!!!")
+                print(frappe.get_traceback())
+                print("_______-----------___________--------->Actual Exception Object:", wf_error)
+
+            frappe.throw("An error occurred during processing. Check the document's comments or 'Error Message' field.")
+
+
 
     @frappe.whitelist()
     def update_record(self, docname):
@@ -446,15 +375,17 @@ class WeighmentIssueManagement(Document):
                         doc4.db_set("vehicle_no", self.vehicle)
                     qc = frappe.get_all("Quality Inspection",filters={"reference_name":prg},fields=["name"])
                     print("------------------------>qc", qc)#
-                    for q in qc:
-                        a = frappe.get_doc("Quality Inspection",q.name)
-                        if(doc2.vehicle_owner !="Company Owned"):
-                            a.db_set("custom_vehicle_no",self.value_to_update)
-                        else:
-                            a.db_set("custom_vehicle_no",self.vehicle)
+                    if qc:
+                        for q in qc:
+                            a = frappe.get_doc("Quality Inspection",q.name)
+                            if(doc2.vehicle_owner !="Company Owned"):
+                                a.db_set("custom_vehicle_no",self.value_to_update)
+                            else:
+                                a.db_set("custom_vehicle_no",self.vehicle)
                     try:
                         pi = frappe.get_value("Purchase Invoice Item", {"purchase_receipt": doc4.name}, 'parent')
-                        doc5 = frappe.get_doc("Purchase Invoice", pi)
+                        if pi:
+                            doc5 = frappe.get_doc("Purchase Invoice", pi)
                         if(doc2.vehicle_owner !="Company Owned"):
                             doc5.db_set("vehicle_no", self.value_to_update)
                         else:

@@ -46,7 +46,9 @@
   "item_group1",
   "custom_delivery_note",
   "bill_quantity",
-  "new_card"
+  "new_card",
+  "error_log_section",
+  "error_message"
  ],
  "fields": [
   {
@@ -60,7 +62,6 @@
   {
    "fieldname": "status",
    "fieldtype": "Data",
-   "hidden": 1,
    "label": "Status",
    "read_only": 1
   },
@@ -309,13 +310,24 @@
    "label": "New Card",
    "mandatory_depends_on": "eval:doc.issue && doc.issue!=\"Vehicle Number Issue\" && doc.issue!=\"Unlink Old & Link New Delivery Note(Weighment Completed)\" && doc.is_assigned && !doc.is_in_progress;",
    "options": "Card Details"
+  },
+  {
+   "fieldname": "error_log_section",
+   "fieldtype": "Section Break",
+   "label": "Error Log"
+  },
+  {
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "label": "Error Message",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-05-02 12:08:07.379775",
+ "modified": "2025-05-02 14:03:50.024564",
  "modified_by": "Administrator",
  "module": "RIPL Customized Apps",
  "name": "Weighment Issue Management",
