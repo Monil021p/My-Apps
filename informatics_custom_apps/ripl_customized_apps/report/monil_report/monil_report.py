@@ -10,6 +10,7 @@ def execute(filters=None):
 	data = get_data(filters)
 	return columns, data
 
+
 def get_columns():
 	return[
 		{
@@ -229,26 +230,63 @@ def get_data(filters=None):
 		# print("---------------->",i)
 		output.append(pi)
 		return output
+	
+# @frappe.whitelist()
+# def get_report_field_options():
+#     field_sources = {
+#         "Sales Invoice": "Sales Invoice",
+#         "Purchase Invoice": "Purchase Invoice",
+#         "Sales Invoice Item": "Sales Invoice Item",
+#         "Purchase Invoice Item": "Purchase Invoice Item"
+#     }
 
-@frappe.whitelist()
-def get_report_field_options():
-    field_sources = {
-        "sales_invoice": "Sales Invoice",
-        "purchase_invoice": "Purchase Invoice",
-        "sales_invoice_item": "Sales Invoice Item",
-        "purchase_invoice_item": "Purchase Invoice Item"
-    }
+#     options = []
 
-    options = []
+#     for doctype_label, doctype in field_sources.items():
+#         meta = frappe.get_meta(doctype)
+#         for df in meta.fields:
+#             if df.fieldtype not in ["Section Break", "Column Break", "Button", "HTML"] and df.fieldname:
+#                 label = f"{doctype_label} → {df.label or df.fieldname}"
+#                 options.append({
+#                     "value": f"{doctype}.{df.fieldname}",  # used internally
+#                     "label": label  # shown to user
+#                 })
+	
+#     return sorted(options, key=lambda x: x["label"])
 
-    for prefix, doctype in field_sources.items():
-        meta = frappe.get_meta(doctype)
-        for df in meta.fields:
-            if df.fieldtype not in ["Section Break", "Column Break", "Button", "HTML"] and df.fieldname:
-                label = f"{prefix}.{df.fieldname} | {df.label or df.fieldname}"
-                options.append({
-                    "value": f"{prefix}.{df.fieldname}",
-                    "label": label
-                })
+# def get_columns(extra_fields=None):
+#     base_columns = [
+#         {"label": "Plant", "fieldtype": "Data", "fieldname": "plant"},
+#         {"label": "Sales Invoice", "fieldtype": "Link", "fieldname": "s_inv", "options": "Sales Invoice"},
+#         {"label": "Purchase Invoice", "fieldtype": "Link", "fieldname": "p_inv", "options": "Purchase Invoice"},
+#         {"label": "Cost Center", "fieldtype": "Data", "fieldname": "cost_center"},
+#         {"label": "Customer Code", "fieldtype": "Link", "fieldname": "customer", "options": "Customer"},
+#         {"label": "Customer Name", "fieldtype": "Data", "fieldname": "customer_name"},
+#         {"label": "Supplier Code", "fieldtype": "Link", "fieldname": "supplier", "options": "Supplier"},
+#         {"label": "Supplier Name", "fieldtype": "Data", "fieldname": "supplier_name"},
+#         {"label": "Date", "fieldtype": "Date", "fieldname": "posting_date", "read_only": 1},
+#         {"label": "Segment", "fieldtype": "Data", "fieldname": "segment"},
+#         {"label": "Item Group", "fieldtype": "Data", "fieldname": "custom_item_group"},
+#         {"label": "Item Code", "fieldtype": "Link", "fieldname": "item", "options": "Item"},
+#         {"label": "Item Name", "fieldtype": "Data", "fieldname": "item_name"},
+#         {"label": "Quantity", "fieldtype": "Data", "fieldname": "qty"},
+#         {"label": "Rate", "fieldtype": "Data", "fieldname": "rate"},
+#         {"label": "Amount", "fieldtype": "Data", "fieldname": "amount"},
+#         {"label": "Total Tax", "fieldtype": "Data", "fieldname": "total_taxes_and_charges"},
+#         {"label": "Grand Total", "fieldtype": "Data", "fieldname": "grand_total"},
+#         {"label": "UOM", "fieldtype": "Data", "fieldname": "uom"},
+#     ]
 
-    return sorted(options, key=lambda x: x["label"])
+#     dynamic_columns = []
+#     for field in extra_fields or []:
+#         doctype, fieldname = field.split(".", 1)
+#         meta = frappe.get_meta(doctype)
+#         df = next((f for f in meta.fields if f.fieldname == fieldname), None)
+#         if df:
+#             dynamic_columns.append({
+#                 "label": f"{doctype} - {df.label or fieldname}",
+#                 "fieldname": field.replace(".", "_"),  # e.g. Sales Invoice.customer_name → sales_invoice_customer_name
+#                 "fieldtype": df.fieldtype or "Data",
+#             })
+
+#     return base_columns + dynamic_columns

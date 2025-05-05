@@ -148,22 +148,24 @@ class WeighmentIssueManagement(Document):
                 doc2.db_set("is_completed", 0)
                 doc3.db_set("is_in_progress", 1)
                 doc3.db_set("is_completed", 0)
-
+                doc_pr=None
+                doc_pi=None
                 try:
                     prg = frappe.get_value("Purchase Receipt Item", {"custom_gate_entry": doc2.name}, 'parent')
                     print("------------------------>prg", prg)
                     doc_pr = frappe.get_doc("Purchase Receipt", prg)
                 
-                    pi = frappe.get_value("Purchase Invoice Item", {"purchase_receipt": doc4.name}, 'parent')
+                    pi = frappe.get_value("Purchase Invoice Item", {"purchase_receipt": doc_pr.name}, 'parent')
                     doc_pi = frappe.get_doc("Purchase Invoice", pi)
                                     
                 except Exception as e:
                     print(f"Error fetching Purchase Receipt from Gate Entry: {e}")
-                if doc_pr or doc_pi:
+                if doc_pr!=None or doc_pi!=None:
                     # wim= frappe.get_doc("Weighment Issue Management",{"name":self.name})
                     # wim.db_set("workflow_state","Cancelled")
                     # print("----------------->wim",wim)
-                    frappe.throw("Kindly remove existing Purchase Receipt/Purchase Invoice before requesting to update!")
+                    # self.db_set("error_message","Error Occured While Processing, Kindly Check Error Log")
+                    frappe.throw("Kindly remove existing Purchase Receipt/Purchase Invoice Before Requesting To Update!")
                     
                 #Fetch PO from child table
                 for i in doc2.purchase_orders:
@@ -252,7 +254,7 @@ class WeighmentIssueManagement(Document):
             print("---------------------->Entered Except Block-----------")
 
             error_text = frappe.get_traceback()
-            frappe.log_error(error_text, "Error in wrong_card")
+            frappe.log_error(error_text, "Error During Processing Wrong Card Issue")
 
             try:
                 print("---------------------->Entered Inner Try Block-----------")
@@ -271,7 +273,7 @@ class WeighmentIssueManagement(Document):
                 print(frappe.get_traceback())
                 print("_______-----------___________--------->Actual Exception Object:", wf_error)
 
-            frappe.throw("An error occurred during processing. Check the document's comments or 'Error Message' field.")
+            frappe.throw("An Error Occured While Processing, Kindly Check Error Log!")
 
 
 

@@ -33,7 +33,7 @@ function wrong_card(frm){
                 frappe.show_alert({
                     message: __('Fields Updated Successfully, Kindly Check Details And Proceed For Weighment!'),
                     indicator: 'orange'
-                });
+                },8);
             }
         }
     });
