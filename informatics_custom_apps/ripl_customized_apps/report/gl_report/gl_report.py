@@ -11,14 +11,13 @@ def execute(filters=None):
 def get_columns():
     return [
         {"label": "Posting Date", "fieldname": "posting_date", "fieldtype": "Date"},
-        {"label": "Voucher Type", "fieldname": "voucher_type", "fieldtype": "Data"},
-        # {"label": "Voucher No", "fieldname": "voucher_no", "fieldtype": "Link", "options": "GL Entry"},
-        
-		{"label": "Voucher", "fieldtype": "Dynamic Link", "fieldname": "voucher_no", "options": "voucher_type"},
-		{"label": "Voucher Type", "fieldtype": "Data", "fieldname": "voucher_type"},
-
+        # {"label": "Voucher Type", "fieldname": "voucher_type", "fieldtype": "Data"},
+        {"label": "Voucher Type", "fieldtype": "Data", "fieldname": "voucher_type"},
+        {"label": "Voucher", "fieldtype": "Dynamic Link", "fieldname": "voucher_no", "options": "voucher_type"},
+        {"label": "GL Entry", "fieldname": "gl_entry", "fieldtype": "Link", "options": "GL Entry"},
         {"label": "Account", "fieldname": "account", "fieldtype": "Link", "options": "Account"},
-        {"label": "Party", "fieldname": "party", "fieldtype": "Data"},
+        {"label": "Party Type", "fieldname": "party_type", "fieldtype": "Data"},
+        {"label": "Party", "fieldname": "party", "fieldtype": "Dynamic Link", "options": "party_type"},
         {"label": "Debit", "fieldname": "debit", "fieldtype": "Currency"},
         {"label": "Credit", "fieldname": "credit", "fieldtype": "Currency"},
         {"label": "Item Code", "fieldname": "item_code", "fieldtype": "Link", "options": "Item"},
@@ -37,13 +36,36 @@ def get_data(filters):
             "posting_date": ["between", [filters.get("from_date"), filters.get("to_date")]],
             "account": filters.get("account") if filters.get("account") else ["!=", ""]
         },
-        fields=["name", "posting_date", "voucher_type", "voucher_no", "account", "debit", "credit", "party_type", "party"],
+        fields=[
+            "name", "posting_date", "voucher_type", "voucher_no",
+            "account", "debit", "credit", "party_type", "party"
+        ],
         order_by="posting_date asc"
     )
 
     output = []
+    voucher_items_map = {}
+    processed_vouchers = set()
 
+    # Step 1: Fetch items per voucher only once
     for entry in entries:
+        key = (entry.voucher_type, entry.voucher_no)
+        if key not in voucher_items_map:
+            try:
+                doc = frappe.get_doc(entry.voucher_type, entry.voucher_no)
+                if doc.docstatus == 1 and hasattr(doc, "items"):
+                    voucher_items_map[key] = doc.items
+                else:
+                    voucher_items_map[key] = []
+            except Exception:
+                frappe.log_error(title="GL Report Error", message=frappe.get_traceback())
+                voucher_items_map[key] = []
+
+    # Step 2: Generate rows
+    for entry in entries:
+        key = (entry.voucher_type, entry.voucher_no)
+        items = voucher_items_map.get(key, [])
+
         base_row = {
             "posting_date": entry.posting_date,
             "voucher_type": entry.voucher_type,
@@ -51,14 +73,16 @@ def get_data(filters):
             "account": entry.account,
             "debit": entry.debit,
             "credit": entry.credit,
+            "gl_entry": entry.name,
+            "party_type": entry.party_type,
             "party": entry.party
         }
 
-        try:
-            doc = frappe.get_doc(entry.voucher_type, entry.voucher_no)
-
-            if hasattr(doc, "items"):
-                for item in doc.items:
+        if key not in processed_vouchers:
+            # Only on first occurrence, show item data
+            processed_vouchers.add(key)
+            if items:
+                for item in items:
                     row = base_row.copy()
                     row.update({
                         "item_code": item.get("item_code"),
@@ -70,9 +94,72 @@ def get_data(filters):
                     output.append(row)
             else:
                 output.append(base_row)
-
-        except Exception as e:
-            frappe.log_error(title="GL Report Error", message=frappe.get_traceback())
-            output.append(base_row)
+        else:
+            # Subsequent GL Entries of same voucher: omit item details
+            row = base_row.copy()
+            row.update({
+                "item_code": "",
+                "item_name": "",
+                "qty": 0,
+                "rate": 0,
+                "amount": 0
+            })
+            output.append(row)
 
     return output
+
+
+
+
+# def get_data(filters):
+#     entries = frappe.get_all(
+#         "GL Entry",
+#         filters={
+#             "docstatus": 1,
+#             "company": filters.get("company"),
+#             "posting_date": ["between", [filters.get("from_date"), filters.get("to_date")]],
+#             "account": filters.get("account") if filters.get("account") else ["!=", ""]
+#         },
+#         fields=["name", "posting_date", "voucher_type", "voucher_no", "account", "debit", "credit", "party_type", "party"],
+#         order_by="posting_date asc"
+#     )
+
+#     output = []
+
+#     for entry in entries:
+#         base_row = {
+#             "posting_date": entry.posting_date,
+#             "voucher_type": entry.voucher_type,
+#             "voucher_no": entry.voucher_no,
+#             "account": entry.account,
+#             "debit": entry.debit,
+#             "credit": entry.credit,
+#             "gl_entry": entry.name,
+#             "party_type": entry.party_type,
+#             "party": entry.party
+#         }
+
+#         try:
+#             doc = frappe.get_doc(entry.voucher_type, entry.voucher_no)
+#             if doc.docstatus != 1:
+#                 continue
+
+#             if hasattr(doc, "items"):
+#                 for item in doc.items:
+#                     row = base_row.copy()
+#                     row.update({
+#                         "item_code": item.get("item_code"),
+#                         "item_name": item.get("item_name"),
+#                         "qty": item.get("qty"),
+#                         "rate": item.get("rate"),
+#                         "amount": item.get("amount")
+#                     })
+#                     output.append(row)
+#             else:
+#                 output.append(base_row)
+
+#         except Exception as e:
+#             frappe.log_error(title="GL Report Error", message=frappe.get_traceback())
+#             output.append(base_row)
+
+#     return output
