@@ -45,9 +45,8 @@ def get_data(filters):
 
     output = []
     voucher_items_map = {}
-    processed_vouchers = set()
 
-    # Step 1: Fetch items per voucher only once
+    # Step 1: Fetch items per voucher
     for entry in entries:
         key = (entry.voucher_type, entry.voucher_no)
         if key not in voucher_items_map:
@@ -61,12 +60,9 @@ def get_data(filters):
                 frappe.log_error(title="GL Report Error", message=frappe.get_traceback())
                 voucher_items_map[key] = []
 
-    # Step 2: Generate rows
+    # Step 2: Add GL Entries
     for entry in entries:
-        key = (entry.voucher_type, entry.voucher_no)
-        items = voucher_items_map.get(key, [])
-
-        base_row = {
+        output.append({
             "posting_date": entry.posting_date,
             "voucher_type": entry.voucher_type,
             "voucher_no": entry.voucher_no,
@@ -75,41 +71,36 @@ def get_data(filters):
             "credit": entry.credit,
             "gl_entry": entry.name,
             "party_type": entry.party_type,
-            "party": entry.party
-        }
+            "party": entry.party,
+            "item_code": "",
+            "item_name": "",
+            "qty": 0,
+            "rate": 0,
+            "amount": 0
+        })
 
-        if key not in processed_vouchers:
-            # Only on first occurrence, show item data
-            processed_vouchers.add(key)
-            if items:
-                for item in items:
-                    row = base_row.copy()
-                    row.update({
-                        "item_code": item.get("item_code"),
-                        "item_name": item.get("item_name"),
-                        "qty": item.get("qty"),
-                        "rate": item.get("rate"),
-                        "amount": item.get("amount")
-                    })
-                    output.append(row)
-            else:
-                output.append(base_row)
-        else:
-            # Subsequent GL Entries of same voucher: omit item details
-            row = base_row.copy()
-            row.update({
-                "item_code": "",
-                "item_name": "",
-                "qty": 0,
-                "rate": 0,
-                "amount": 0
+    # Step 3: Add item rows (separately)
+    for key, items in voucher_items_map.items():
+        voucher_type, voucher_no = key
+        for item in items:
+            output.append({
+                "posting_date": "",  # or could use voucher date if needed
+                "voucher_type": voucher_type,
+                "voucher_no": voucher_no,
+                "account": "",
+                "debit": 0,
+                "credit": 0,
+                "gl_entry": "",
+                "party_type": "",
+                "party": "",
+                "item_code": item.get("item_code"),
+                "item_name": item.get("item_name"),
+                "qty": item.get("qty"),
+                "rate": item.get("rate"),
+                "amount": item.get("amount")
             })
-            output.append(row)
 
     return output
-
-
-
 
 # def get_data(filters):
 #     entries = frappe.get_all(
