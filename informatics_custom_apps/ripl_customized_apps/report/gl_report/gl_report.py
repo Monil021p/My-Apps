@@ -16,6 +16,7 @@ def get_columns():
         {"label": "Voucher", "fieldtype": "Dynamic Link", "fieldname": "voucher_no", "options": "voucher_type"},
         {"label": "GL Entry", "fieldname": "gl_entry", "fieldtype": "Link", "options": "GL Entry"},
         {"label": "Account", "fieldname": "account", "fieldtype": "Link", "options": "Account"},
+        {"label": "Cost Center", "fieldname": "cost_center", "fieldtype": "Data"},
         {"label": "Party Type", "fieldname": "party_type", "fieldtype": "Data"},
         {"label": "Party", "fieldname": "party", "fieldtype": "Dynamic Link", "options": "party_type"},
         {"label": "Debit", "fieldname": "debit", "fieldtype": "Currency"},
@@ -38,7 +39,7 @@ def get_data(filters):
         },
         fields=[
             "name", "posting_date", "voucher_type", "voucher_no",
-            "account", "debit", "credit", "party_type", "party"
+            "account", "debit","cost_center","credit", "party_type", "party"
         ],
         order_by="posting_date asc"
     )
@@ -69,6 +70,7 @@ def get_data(filters):
             "account": entry.account,
             "debit": entry.debit,
             "credit": entry.credit,
+            "cost_center":entry.cost_center,
             "gl_entry": entry.name,
             "party_type": entry.party_type,
             "party": entry.party,
