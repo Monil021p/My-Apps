@@ -30,16 +30,16 @@ frappe.query_reports["Monil Report"] = {
         }
     ],
 
-    onload: function(report) {
-        // Wait for filters to fully render before clearing
-        setTimeout(() => {
-            ["plant", "from_date", "to_date", "account"].forEach(fieldname => {
-                let filter = frappe.query_report.get_filter(fieldname);
-                if (filter) {
-                    filter.set_value("");  // or `null`, but "" works better for Link fields
-                }
-            });
-        }, 100);
-    }
+    // onload: function(report) {
+    //     // Wait for filters to fully render before clearing
+    //     setTimeout(() => {
+    //         ["plant", "from_date", "to_date", "account"].forEach(fieldname => {
+    //             let filter = frappe.query_report.get_filter(fieldname);
+    //             if (filter) {
+    //                 filter.set_value("");  // or `null`, but "" works better for Link fields
+    //             }
+    //         });
+    //     }, 100);
+    // }
     
 };

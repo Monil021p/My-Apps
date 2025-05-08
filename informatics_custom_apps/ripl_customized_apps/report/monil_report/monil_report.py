@@ -16,6 +16,10 @@ def get_columns():
 		{"label": "Debit", "fieldtype": "Data", "fieldname": "debit"},
 		{"label": "Credit", "fieldtype": "Data", "fieldname": "credit"},
 		{"label": "GL Entry", "fieldtype": "Link", "fieldname": "gl_entry", "options": "GL Entry"},
+
+		{"label": "Voucher", "fieldtype": "Dynamic Link", "fieldname": "voucher", "options": "voucher_type"},
+		{"label": "Voucher Type", "fieldtype": "Data", "fieldname": "voucher_type"},
+
 		{"label": "Sales Invoice", "fieldtype": "Link", "fieldname": "s_inv", "options": "Sales Invoice"},
 		{"label": "Purchase Invoice", "fieldtype": "Link", "fieldname": "p_inv", "options": "Purchase Invoice"},
 		{"label": "Cost Center", "fieldtype": "Data", "fieldname": "cost_center"},
@@ -93,6 +97,7 @@ def get_data(filters=None):
 				output.append({
 					"plant": plant.name,
 					"p_inv": purchase_invoice.name,
+
 					"cost_center": purchase_invoice.cost_center,
 					"supplier": purchase_invoice.supplier,
 					"gl_entry":gle.name,
@@ -110,5 +115,32 @@ def get_data(filters=None):
 					"total_taxes_and_charges": purchase_invoice.total_taxes_and_charges,
 					"grand_total": purchase_invoice.grand_total
 				})
-
+		elif gl.voucher_type != "Purchase Invoice" or gl.voucher_type != "Sales Invoice" :
+			gle = frappe.get_doc("GL Entry", gl.name)
+			try:
+				if gl.voucher_type != "Journal Entry":
+					doc = frappe.get_doc(gl.voucher_type, gl.voucher_no)
+			except:
+				doc = None
+			if doc!=None:	
+				for item in doc.items:
+					output.append({
+							"plant": plant.name,
+							"cost_center": item.cost_center,
+							"gl_entry":gle.name,
+							"voucher_type":gle.voucher_type,
+							"voucher": gle.voucher_no,
+							"posting_date": doc.posting_date,
+							"segment": item.segment,
+							"item": item.item_code,
+							"item_name": item.item_name,
+							"debit": gle.debit,
+							"credit":gle.credit,
+							"qty": item.qty,
+							"rate": item.basic_rate,
+							"amount": item.amount,
+							"uom": item.uom
+					})
+			else:
+				pass
 	return output
