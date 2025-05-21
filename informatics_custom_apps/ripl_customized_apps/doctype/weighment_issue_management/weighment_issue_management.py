@@ -223,6 +223,8 @@ class WeighmentIssueManagement(Document):
                     doc8.db_set("accepted_quantity", self.bill_quantity)
                 if self.new_card:
                     doc2.db_set("card_number",self.new_card)
+                    doc5 = frappe.get_doc("Card Details", {"name": self.new_card})
+                    doc5.db_set("is_assigned", True)
                 if not self.new_card and doc4.is_assigned==0:
                     doc4.db_set("is_assigned", True)
                 elif doc4.is_assigned==1 and self.is_completed==1:
@@ -230,7 +232,7 @@ class WeighmentIssueManagement(Document):
                     # To check if card is assigned to someone else, then assign a new card
                 return True
 
-            if doc2.entry_type == "Outward" and doc3.is_completed ==1: #need to build different logic for sugar,others are fine
+            if doc2.entry_type == "Outward" and doc3.is_completed ==1: # may need to build different logic for sugar,others are fine
                 doc3.db_set("gross_weight",0)
                 doc3.db_set("net_weight",0)
                 doc2.db_set("is_in_progress",1)
@@ -243,6 +245,8 @@ class WeighmentIssueManagement(Document):
 
                 if self.new_card:
                     doc2.db_set("card_number",self.new_card)
+                    doc5 = frappe.get_doc("Card Details", {"name": self.new_card})
+                    doc5.db_set("is_assigned", True)
                 if not self.new_card and doc4.is_assigned==0:
                     doc4.db_set("is_assigned", True)
                 else:
@@ -456,6 +460,8 @@ class WeighmentIssueManagement(Document):
             doc3.db_set("is_manual_weighment",False)
             if self.new_card:
                 doc2.db_set("card_number",self.new_card)
+                doc5 = frappe.get_doc("Card Details", {"name": self.new_card})
+                doc5.db_set("is_assigned", True)
             if not self.new_card and doc4.is_assigned==0:
                  doc4.db_set("is_assigned", True)
             return True
@@ -480,7 +486,7 @@ class WeighmentIssueManagement(Document):
             # doc3.delivery_note_details =[]
 
             
-            # if self.custom_delivery_note:
+        if self.custom_delivery_note:
             doc_d=frappe.get_doc("Delivery Note", {"name": self.custom_delivery_note})
             doc_d.db_set("custom_weighment",doc3.name)#To Link D.N
             doc_d.db_set("vehicle_no",doc3.vehicle_number)
@@ -517,6 +523,8 @@ class WeighmentIssueManagement(Document):
             #     doc3.save(ignore_permissions=True)
             if self.new_card:
                 doc2.db_set("card_number",self.new_card)
+                doc5 = frappe.get_doc("Card Details", {"name": self.new_card})
+                doc5.db_set("is_assigned", True)
             if not self.new_card and doc4.is_assigned==0:
                  doc4.db_set("is_assigned", True)
             doc3.save(ignore_permissions=True)
@@ -573,6 +581,8 @@ class WeighmentIssueManagement(Document):
                 doc3.db_set("net_weight",0)  
             if self.new_card:
                 doc2.db_set("card_number",self.new_card)
+                doc5 = frappe.get_doc("Card Details", {"name": self.new_card})
+                doc5.db_set("is_assigned", True)
             if not self.new_card and doc4.is_assigned==0:
                  doc4.db_set("is_assigned", True)
             return True

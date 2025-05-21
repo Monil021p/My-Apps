@@ -27,11 +27,11 @@ frappe.query_reports["GL Report"] = {
             label: __("Account"),
             fieldtype: "Link",
             options: "Account"
-        },
-        {
-            fieldname: "group_by_voucher",
-            label: __("Group by Voucher"),
-            fieldtype: "Check"
         }
+        // ,{
+        //     fieldname: "group_by_voucher",
+        //     label: __("Group by Voucher"),
+        //     fieldtype: "Check"
+        // }
     ]
 };

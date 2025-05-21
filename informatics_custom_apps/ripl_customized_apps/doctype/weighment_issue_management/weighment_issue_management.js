@@ -450,7 +450,7 @@ frappe.ui.form.on("Weighment Issue Management", {
         if (frm.doc.entry_type === "Outward" && frm.doc.custom_is_manual_weighment1 ==1 && frm.doc.custom_is_in_progress1 == 1) {
             options = ["Outward Manual Issue", "Vehicle Number Issue"];
         } 
-        else if(frm.doc.entry_type === "Outward" && frm.doc.custom_is_manual_weighment1 ==1 && frm.doc.custom_is_completed1 == 1){
+        else if(frm.doc.custom_is_manual_weighment1 ==1 && frm.doc.custom_is_completed1 == 1){
             options = ["Outward Manual Issue", "Vehicle Number Issue","Reset Second Weight(Manual)"];
         }
         else if(frm.doc.entry_type === "Outward" && frm.doc.custom_is_manual_weighment1 ==0 && frm.doc.custom_is_in_progress1 == 1){
