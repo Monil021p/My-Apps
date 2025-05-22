@@ -26,7 +26,7 @@ frappe.query_reports["Department Wise Attendance"] = {
             const plant = encodeURIComponent(frappe.query_report.get_filter_value("plant"));
             const date = encodeURIComponent(frappe.query_report.get_filter_value("date"));
 
-            // Correct Frappe route with filters in query params
+            
 			const route = `/app/attendance?attendance_date=${date}&plant=${plant}&department=${department}`;
 
             return `<a href="${route}" target="_blank">${value}</a>`;
